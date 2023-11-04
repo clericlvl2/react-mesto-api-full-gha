@@ -1,4 +1,4 @@
-import { AUTH_BASE_URL } from './constants';
+import {BASE_URL} from './constants';
 
 export const handleResponse = res => {
   if (res.ok) {
@@ -8,4 +8,4 @@ export const handleResponse = res => {
 };
 
 export const request = (endpoint, options) =>
-  fetch(AUTH_BASE_URL + endpoint, options).then(handleResponse);
+  fetch(BASE_URL + endpoint, options).then(handleResponse);

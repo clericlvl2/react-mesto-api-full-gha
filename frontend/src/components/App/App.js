@@ -1,41 +1,44 @@
-import React, { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import Header from '../Header/Header';
 import Main from '../Main/Main';
 import Footer from '../Footer/Footer';
 import EditProfilePopup from '../EditProfilePopup/EditProfilePopup';
 import ImagePopup from '../ImagePopup/ImagePopup';
-import api from '../../utils/api';
 import CurrentUserContext from '../../contexts/CurrentUserContext';
 import EditAvatarPopup from '../EditAvatarPopup/EditAvatarPopup';
 import defaultUserPic from '../../images/userpic-jacques.jpg';
 import AddPlacePopup from '../AddPlacePopup/AddPlacePopup';
 import ConfirmActionPopup from '../ConfirmActionPopup/ConfirmActionPopup';
 import Login from '../Login/Login';
-import { Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import {Route, Routes, Navigate, useNavigate} from 'react-router-dom';
 import Register from '../Register/Register';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import * as auth from '../../utils/auth';
+import api from '../../utils/api';
 import InfoTooltip from '../InfoTooltip/InfoTooltip';
-import { DEPLOY_URL } from '../../utils/constants';
+
+const DEFAULT_USER = {
+  name: 'Имя...',
+  about: 'Описание...',
+  avatar: defaultUserPic,
+};
+
+const DEFAULT_TOOLTIP = {
+  isOpen: false,
+  isError: false,
+  errorMessage: '',
+};
 
 const App = () => {
   const navigate = useNavigate();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Имя...',
-    about: 'Описание...',
-    avatar: defaultUserPic,
-  });
+  const [currentUser, setCurrentUser] = useState(DEFAULT_USER);
   const [selectedCard, setSelectedCard] = useState({});
   const [cardsList, setCardsList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [infoTooltipState, setInfoTooltipState] = useState({
-    isOpen: false,
-    isError: false,
-    errorMessage: '',
-  });
+  const [infoTooltipState, setInfoTooltipState] = useState(DEFAULT_TOOLTIP);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
@@ -52,11 +55,12 @@ const App = () => {
     infoTooltipState.isOpen;
 
   useEffect(() => {
-    function closeByEscape(evt) {
+    const closeByEscape = (evt) => {
       if (evt.key === 'Escape') {
         closeAllPopups();
       }
-    }
+    };
+
     if (isPopupOpen) {
       document.addEventListener('keydown', closeByEscape);
       return () => {
@@ -66,65 +70,55 @@ const App = () => {
   }, [isPopupOpen]);
 
   useEffect(() => {
-    handleTokenCheck();
-
-    api
-      .initializeAppData()
-      .then(([userData, cardsList]) => {
-        setCurrentUser(userData);
-        setCardsList(cardsList);
-      })
-      .catch(console.error);
+    checkUser().then((isLogged) => (isLogged ? initAppContent() : undefined));
   }, []);
 
-  const handleTokenCheck = () => {
-    const jwt = localStorage.getItem('jwt');
-    if (jwt) {
-      auth
-        .checkToken(jwt)
-        .then(data => {
-          if (data.email !== undefined) {
-            localStorage.setItem('email', data.email);
-          }
-        })
-        .then(() => {
-          setIsLoggedIn(true);
-          navigate('/', { replace: true });
-        })
-        .catch(console.error);
-    }
+  const initAppContent = () =>
+    api
+      .initializeAppData()
+      .then(([user, cards]) => {
+        setCurrentUser(user.data);
+        setCardsList(cards.data);
+        onLoginSuccess(user.data.email);
+      })
+      .catch(console.error);
+
+  const onLoginSuccess = (email) => {
+    localStorage.setItem('email', email);
+    setIsLoggedIn(true);
+    navigate('/', {replace: true});
   };
 
-  const onLogin = ({ email, password }) => {
+  const checkUser = () => {
+    const email = localStorage.getItem('email');
+
+    if (!email) {
+      return Promise.resolve(false);
+    }
+
+    return api
+      .getUserData()
+      .then(({data}) => Boolean(data))
+      .catch((err) => {
+        console.error(err);
+        return false;
+      });
+  };
+
+  const onLogin = ({email, password}) => {
     if (!email || !password) {
       return;
     }
-    setIsLoading(true);
 
+    setIsLoading(true);
     return auth
-      .authorize(email, password)
-      .then(data => {
-        const jwtToken = data.token;
-        if (jwtToken) {
-          localStorage.setItem('jwt', jwtToken);
-          return auth.checkToken(jwtToken);
-        }
-      })
-      .then(res => {
-        const email = res.data.email;
-        if (email !== undefined) {
-          localStorage.setItem('email', email);
-        }
-      })
-      .then(() => {
-        setIsLoggedIn(true);
-        navigate('/', { replace: true });
-      })
-      .catch(err => callErrorTooltip(err))
+      .login(email, password)
+      .then(initAppContent)
+      .catch(callErrorTooltip)
       .finally(() => setIsLoading(false));
   };
 
-  const onRegister = ({ email, password }) => {
+  const onRegister = ({email, password}) => {
     if (!email || !password) {
       return;
     }
@@ -132,23 +126,23 @@ const App = () => {
     setIsLoading(true);
     return auth
       .register(email, password)
-      .then(res => {
-        const email = res.data.email;
-        if (email !== undefined) {
-          localStorage.setItem('email', email);
-          callSuccessTooltip();
-          navigate('signin', { replace: true });
+      .then(({data}) => {
+        if (!data) {
+          return;
         }
+
+        callSuccessTooltip();
+        navigate('signin', {replace: true});
       })
-      .catch(err => callErrorTooltip(err))
+      .catch(callErrorTooltip)
       .finally(() => setIsLoading(false));
   };
 
   const onSignOut = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('jwt');
     localStorage.removeItem('email');
-    navigate('/signin', { replace: true });
+    navigate('/signin', {replace: true});
+    auth.logout().catch(console.error);
   };
 
   const callSuccessTooltip = () =>
@@ -158,11 +152,11 @@ const App = () => {
       errorMessage: '',
     });
 
-  const callErrorTooltip = errorMessage =>
+  const callErrorTooltip = (error) =>
     setInfoTooltipState({
       isOpen: true,
       isError: true,
-      errorMessage: errorMessage,
+      errorMessage: error.message,
     });
 
   const closeInfoTooltip = () =>
@@ -174,74 +168,84 @@ const App = () => {
   const handleEditAvatarClick = () => setIsEditAvatarPopupOpen(true);
   const handleEditProfileClick = () => setIsEditProfilePopupOpen(true);
   const handleAddPlaceClick = () => setIsAddPlacePopupOpen(true);
-  const handleCardClick = card => setSelectedCard(card);
-  const handleDeleteCardClick = data => {
+  const handleCardClick = (card) => setSelectedCard(card);
+  const handleDeleteCardClick = (data) => {
     setIsConfirmActionPopupOpen(true);
     setConfirmActionPopupData(data);
   };
-  const handleCardLike = card => {
-    const isLiked = card.likes.some(u => u._id === currentUser._id);
+
+  const handleCardLike = (selectedCard) => {
+    const isLiked = selectedCard.likes.some(
+      (user) => user._id === currentUser._id
+    );
     const request = isLiked
-      ? api.unsetCardLike(card._id)
-      : api.setCardLike(card._id);
+      ? api.unsetCardLike(selectedCard._id)
+      : api.setCardLike(selectedCard._id);
 
     return request
-      .then(newCard => {
-        setCardsList(state =>
-          state.map(c => (c._id === card._id ? newCard : c))
-        );
-      })
+      .then((newCard) =>
+        setCardsList((cards) =>
+          cards.map((card) =>
+            card._id === selectedCard._id ? newCard.data : card
+          )
+        )
+      )
       .catch(console.error);
   };
-  const handleCardDelete = card => {
+
+  const handleCardDelete = (card) => {
     const cardId = card._id;
     setIsLoading(true);
 
     return api
       .deleteCard(cardId)
       .then(() => {
-        setCardsList(state => state.filter(c => c._id !== card._id));
+        setCardsList((state) => state.filter((c) => c._id !== card._id));
         closeAllPopups();
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   };
-  const handleUpdateUser = ({ name, about }) => {
+
+  const handleUpdateUser = ({name, about}) => {
     setIsLoading(true);
 
     return api
-      .updateUserInfo({ name, about })
-      .then(userData => {
-        setCurrentUser(userData);
+      .updateUserInfo({name, about})
+      .then((user) => {
+        setCurrentUser(user.data);
         closeAllPopups();
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   };
-  const handleUpdateAvatar = ({ avatar }) => {
+
+  const handleUpdateAvatar = ({avatar}) => {
     setIsLoading(true);
 
     return api
-      .updateUserAvatar({ avatar })
-      .then(userData => {
-        setCurrentUser(userData);
+      .updateUserAvatar({avatar})
+      .then((user) => {
+        setCurrentUser(user.data);
         closeAllPopups();
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   };
-  const handleAddPlaceSubmit = ({ name, link }) => {
+
+  const handleAddPlaceSubmit = ({name, link}) => {
     setIsLoading(true);
 
     return api
-      .addNewCard({ name, link })
-      .then(newCard => {
-        setCardsList([newCard, ...cardsList]);
+      .addNewCard({name, link})
+      .then((newCard) => {
+        setCardsList([newCard.data, ...cardsList]);
         closeAllPopups();
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   };
+
   const closeAllPopups = () => {
     setIsEditAvatarPopupOpen(false);
     setIsEditProfilePopupOpen(false);
@@ -253,37 +257,34 @@ const App = () => {
 
   return (
     <CurrentUserContext.Provider value={currentUser}>
-      <Header isLoggedIn={isLoggedIn} onSignOut={onSignOut} />
+      <Header isLoggedIn={isLoggedIn} onSignOut={onSignOut}/>
 
       <Routes>
-        <Route path={DEPLOY_URL}>
-          <Route
-            path=""
-            element={
-              <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <Main
-                  cardsList={cardsList}
-                  onCardClick={handleCardClick}
-                  onCardLike={handleCardLike}
-                  onCardDelete={handleDeleteCardClick}
-                  onEditAvatar={handleEditAvatarClick}
-                  onEditProfile={handleEditProfileClick}
-                  onAddPlace={handleAddPlaceClick}
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="signin"
-            element={<Login onSubmit={onLogin} isLoading={isLoading} />}
-          />
-          <Route
-            path="signup"
-            element={<Register onSubmit={onRegister} isLoading={isLoading} />}
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-        <Route path="/*" element={<Navigate to={DEPLOY_URL} replace />} />
+        <Route
+          path=""
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <Main
+                cardsList={cardsList}
+                onCardClick={handleCardClick}
+                onCardLike={handleCardLike}
+                onCardDelete={handleDeleteCardClick}
+                onEditAvatar={handleEditAvatarClick}
+                onEditProfile={handleEditProfileClick}
+                onAddPlace={handleAddPlaceClick}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="signin"
+          element={<Login onSubmit={onLogin} isLoading={isLoading}/>}
+        />
+        <Route
+          path="signup"
+          element={<Register onSubmit={onRegister} isLoading={isLoading}/>}
+        />
+        <Route path="*" element={<Navigate to="/" replace/>}/>
       </Routes>
 
       <EditAvatarPopup
@@ -309,15 +310,15 @@ const App = () => {
 
       <ConfirmActionPopup
         isOpen={isConfirmActionPopupOpen}
-        title={'Вы уверены?'}
-        submitText={'Да'}
+        title="Вы уверены?"
+        submitText="Да"
         onSubmit={handleCardDelete}
         onClose={closeAllPopups}
         data={confirmActionPopupData}
         isLoading={isLoading}
       />
 
-      <ImagePopup card={selectedCard} onClose={closeAllPopups} />
+      <ImagePopup card={selectedCard} onClose={closeAllPopups}/>
 
       <InfoTooltip
         isOpen={infoTooltipState.isOpen}
@@ -326,7 +327,7 @@ const App = () => {
         onClose={closeInfoTooltip}
       />
 
-      {isLoggedIn && <Footer />}
+      {isLoggedIn && <Footer/>}
     </CurrentUserContext.Provider>
   );
 };

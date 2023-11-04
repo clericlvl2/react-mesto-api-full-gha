@@ -1,4 +1,4 @@
-import { API_ERROR_CONFIG } from './constants';
+import {API_ERROR_CONFIG, BASE_URL} from './constants';
 
 class Api {
   constructor(options) {
@@ -15,6 +15,7 @@ class Api {
 
   getUserData() {
     return fetch(`${this._baseUrl}/users/me`, {
+      credentials: 'include',
       headers: this._headers,
     }).then(res => {
       return this._handleResponse(res, API_ERROR_CONFIG.getUserError);
@@ -24,6 +25,7 @@ class Api {
   updateUserInfo(data) {
     return fetch(`${this._baseUrl}/users/me`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: this._headers,
       body: JSON.stringify(data),
     }).then(res => {
@@ -34,6 +36,7 @@ class Api {
   updateUserAvatar(data) {
     return fetch(`${this._baseUrl}/users/me/avatar`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: this._headers,
       body: JSON.stringify(data),
     }).then(res => {
@@ -43,6 +46,7 @@ class Api {
 
   getAllCards() {
     return fetch(`${this._baseUrl}/cards`, {
+      credentials: 'include',
       headers: this._headers,
     }).then(res => {
       return this._handleResponse(res, API_ERROR_CONFIG.getCardsError);
@@ -52,6 +56,7 @@ class Api {
   addNewCard(data) {
     return fetch(`${this._baseUrl}/cards`, {
       method: 'POST',
+      credentials: 'include',
       headers: this._headers,
       body: JSON.stringify(data),
     }).then(res => {
@@ -62,6 +67,7 @@ class Api {
   deleteCard(cardId) {
     return fetch(`${this._baseUrl}/cards/${cardId}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: this._headers,
     }).then(res => {
       return this._handleResponse(res, API_ERROR_CONFIG.deleteCardError);
@@ -71,6 +77,7 @@ class Api {
   setCardLike(cardId) {
     return fetch(`${this._baseUrl}/cards/${cardId}/likes`, {
       method: 'PUT',
+      credentials: 'include',
       headers: this._headers,
     }).then(res => {
       return this._handleResponse(res, API_ERROR_CONFIG.likeCardError);
@@ -80,6 +87,7 @@ class Api {
   unsetCardLike(cardId) {
     return fetch(`${this._baseUrl}/cards/${cardId}/likes`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: this._headers,
     }).then(res => {
       return this._handleResponse(res, API_ERROR_CONFIG.likeCardError);
@@ -92,11 +100,8 @@ class Api {
 }
 
 const api = new Api({
-  baseUrl: 'https://mesto.nomoreparties.co/v1/cohort-55',
-  headers: {
-    authorization: 'dada8704-016b-43db-b43a-5dfe373a30d9',
-    'Content-Type': 'application/json',
-  },
+  baseUrl: BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export default api;

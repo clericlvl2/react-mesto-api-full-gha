@@ -1,7 +1,6 @@
 import React from 'react';
 import mestoWhite from '../../images/mesto-white.svg';
 import { Link, useLocation } from 'react-router-dom';
-import { DEPLOY_URL } from '../../utils/constants';
 
 const Header = ({ isLoggedIn, onSignOut }) => {
   const location = useLocation();
@@ -15,7 +14,7 @@ const Header = ({ isLoggedIn, onSignOut }) => {
       {isLoggedIn ? (
         <div className="header__menu">
           <p className="header__profile">
-            {userEmail ? userEmail : 'example@mail.com'}
+            {userEmail ? userEmail : "example@mail.com"}
           </p>
           <button className="header__link header__button" onClick={onSignOut}>
             Выйти
@@ -23,14 +22,10 @@ const Header = ({ isLoggedIn, onSignOut }) => {
         </div>
       ) : (
         <Link
-          to={
-            currentPath === `${DEPLOY_URL}/signup`
-              ? `${DEPLOY_URL}/signin`
-              : `${DEPLOY_URL}/signup`
-          }
+          to={currentPath === "/signup" ? "/signin" : "/signup"}
           className="header__link"
         >
-          {currentPath === `${DEPLOY_URL}/signup` ? 'Войти' : 'Регистрация'}
+          {currentPath === "/signup" ? "Войти" : "Регистрация"}
         </Link>
       )}
     </header>
