@@ -1,0 +1,7 @@
+.popup__btn-submit_disabled {
+  background: rgba(0, 0, 0, .8);
+}
+
+.popup__btn-submit_disabled:hover {
+  background: rgba(0, 0, 0, .8);
+}
