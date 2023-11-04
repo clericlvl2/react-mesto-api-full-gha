@@ -5,7 +5,7 @@ const { UnauthorizedError } = require('../utils/errors');
 const { ERROR_MESSAGE } = require('../utils/constants');
 
 // eslint-disable-next-line consistent-return
-module.exports.auth = (req, res, next) => {
+module.exports = (req, res, next) => {
   const jwtToken = req.cookies.jwt;
   const isLogged = isExist(jwtToken);
 

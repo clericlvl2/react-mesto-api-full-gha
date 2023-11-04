@@ -4,7 +4,7 @@ const User = require('../models/user');
 const { getJwtSecret } = require('../utils/helpers');
 const { COOKIE_OPTIONS, JWT_SIGN_OPTIONS } = require('./constants');
 
-module.exports.login = (req, res, next) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
@@ -13,4 +13,12 @@ module.exports.login = (req, res, next) => {
       res.cookie('jwt', token, COOKIE_OPTIONS).send({});
     })
     .catch(next);
+};
+const logout = (req, res) => {
+  res.clearCookie('jwt').send({});
+};
+
+module.exports = {
+  login,
+  logout,
 };

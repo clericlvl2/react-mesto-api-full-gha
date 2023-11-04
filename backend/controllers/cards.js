@@ -1,11 +1,12 @@
 const Card = require('../models/card');
-const { ERROR_MESSAGE, MODEL_UPDATE_OPTIONS } = require('../utils/constants');
+const { ERROR_MESSAGE } = require('../utils/constants');
+const { MODEL_UPDATE_OPTIONS, CARDS_LIMIT } = require('./constants');
+const { ForbiddenError } = require('../utils/errors');
 const {
   responseHandler,
   errorHandler,
   checkDataForNull,
 } = require('../utils/helpers');
-const { ForbiddenError } = require('../utils/errors');
 
 const {
   notFoundById,
@@ -15,22 +16,23 @@ const {
   accessToCardIsForbidden,
 } = ERROR_MESSAGE.cards;
 
-module.exports.getCards = (req, res, next) => {
-  Card.find({})
+const getCards = (req, res, next) => {
+  Card.find({}).sort({ createdAt: -1 }).limit(CARDS_LIMIT)
     .populate(['owner', 'likes'])
     .then(responseHandler(res))
     .catch(errorHandler(next));
 };
 
-module.exports.createCard = (req, res, next) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
+    .then(card => Card.populate(card, 'owner'))
     .then(responseHandler(res))
     .catch(errorHandler(next, invalidDataOnCreateCard));
 };
 
-module.exports.deleteCard = (req, res, next) => {
+const deleteCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findById(cardId)
@@ -53,21 +55,30 @@ const findCardByIdAndUpdate = ({
   res, next, id, newData,
 }) => {
   Card.findByIdAndUpdate(id, newData, MODEL_UPDATE_OPTIONS)
+    .populate(['owner', 'likes'])
     .then(checkDataForNull(invalidIdOnToggleLike))
-    .then(() => res.send({}))
+    .then(responseHandler(res))
     .catch(errorHandler(next, invalidDataOnToggleLike));
 };
 
-module.exports.likeCard = (req, res, next) => findCardByIdAndUpdate({
+const likeCard = (req, res, next) => findCardByIdAndUpdate({
   res,
   next,
   id: req.params.cardId,
   newData: { $addToSet: { likes: req.user._id } },
 });
 
-module.exports.dislikeCard = (req, res, next) => findCardByIdAndUpdate({
+const dislikeCard = (req, res, next) => findCardByIdAndUpdate({
   res,
   next,
   id: req.params.cardId,
   newData: { $pull: { likes: req.user._id } },
 });
+
+module.exports = {
+  getCards,
+  createCard,
+  deleteCard,
+  likeCard,
+  dislikeCard,
+};

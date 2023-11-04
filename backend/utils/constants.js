@@ -1,10 +1,10 @@
-module.exports.DEFAULT_USER = {
+const DEFAULT_USER = {
   name: 'Жак-Ив Кусто',
   about: 'Исследователь',
   avatar: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
 };
 
-module.exports.HTTP_ERROR = {
+const HTTP_ERROR = {
   VALIDATION: {
     name: 'ValidationError',
     status: 400,
@@ -31,7 +31,7 @@ module.exports.HTTP_ERROR = {
   },
 };
 
-module.exports.MONGOOSE_ERROR = {
+const MONGOOSE_ERROR = {
   VALIDATION: {
     name: 'ValidationError',
   },
@@ -40,7 +40,7 @@ module.exports.MONGOOSE_ERROR = {
   },
 };
 
-module.exports.ERROR_MESSAGE = {
+const ERROR_MESSAGE = {
   users: {
     notFoundById: 'Пользователь по указанному ID не найден.',
     invalidDataOnCreateUser:
@@ -68,4 +68,11 @@ module.exports.ERROR_MESSAGE = {
   rejectUnauthorized: 'Необходима авторизация',
   unmatchedRoute: 'Адрес запроса указан неверно.',
   default: 'На сервере произошла ошибка.',
+};
+
+module.exports = {
+  DEFAULT_USER,
+  HTTP_ERROR,
+  MONGOOSE_ERROR,
+  ERROR_MESSAGE,
 };

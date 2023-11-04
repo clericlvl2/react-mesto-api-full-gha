@@ -1,11 +1,10 @@
 const router = require('express').Router();
 
+const auth = require('../middlewares/auth');
+const { unmatchedRouteHandler } = require('../utils/helpers');
 const cardsRoutes = require('./cards');
 const usersRoutes = require('./users');
 const rootRoutes = require('./auth');
-
-const { auth } = require('../middlewares/auth');
-const { unmatchedRouteHandler } = require('../utils/helpers');
 
 router.get('/crash-test', () => {
   setTimeout(() => {

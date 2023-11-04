@@ -40,27 +40,27 @@ const findUserByIdAndUpdate = ({
     .catch(errorHandler(next, errorMessage));
 };
 
-module.exports.getUserById = (req, res, next) =>
+const getUserById = (req, res, next) =>
   findUserById({ res, next, id: req.params.id });
 
-module.exports.getOwnUser = (req, res, next) =>
+const getOwnUser = (req, res, next) =>
   findUserById({ res, next, id: req.user._id });
 
-module.exports.updateUserInfo = (req, res) => findUserByIdAndUpdate({
+const updateUserInfo = (req, res) => findUserByIdAndUpdate({
   id: req.user._id,
   newData: filterProperties(req.body, ['name', 'about']),
   errorMessage: invalidDataOnUpdateInfo,
   res,
 });
 
-module.exports.updateUserAvatar = (req, res) => findUserByIdAndUpdate({
+const updateUserAvatar = (req, res) => findUserByIdAndUpdate({
   id: req.user._id,
   newData: { avatar: req.body.avatar },
   errorMessage: invalidDataOnUpdateAvatar,
   res,
 });
 
-module.exports.createUser = (req, res, next) => {
+const createUser = (req, res, next) => {
   const {
     name, about, avatar, password, email,
   } = req.body;
@@ -81,6 +81,15 @@ module.exports.createUser = (req, res, next) => {
     });
 };
 
-module.exports.getUsers = (req, res, next) => {
+const getUsers = (req, res, next) => {
   User.find({}).then(responseHandler(res)).catch(errorHandler(next));
+};
+
+module.exports = {
+  getUserById,
+  getOwnUser,
+  updateUserInfo,
+  updateUserAvatar,
+  createUser,
+  getUsers,
 };
