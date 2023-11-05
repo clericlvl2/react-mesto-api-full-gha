@@ -15,7 +15,6 @@ const COOKIE_OPTIONS = {
   maxAge: 1000 * 3600 * 24 * 7,
   httpOnly: true,
   sameSite: 'None',
-  secure: true,
 };
 
 module.exports = {
