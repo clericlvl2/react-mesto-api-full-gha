@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://localhost:3001';
+export const BASE_URL = 'https://api.clericlvl2.students.nomoredomainsmonster.ru';
 
 export const API_ERROR_CONFIG = {
   defaultError: 'что-то пошло не так',

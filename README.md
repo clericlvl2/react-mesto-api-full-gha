@@ -9,7 +9,7 @@
 
 ## Ссылки на проект
 
-IP-адрес 84.201.128.249
+IP 84.201.128.249
 
 Frontend https://clericlvl2.students.nomoredomainsmonster.ru
 
